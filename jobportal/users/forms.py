@@ -7,6 +7,12 @@ class UserProfileForm(forms.ModelForm):
     first_name = forms.CharField(max_length=30, required=False)
     last_name = forms.CharField(max_length=30, required=False)
     email = forms.EmailField(required=False)
+    company_name = forms.CharField(max_length=100, required=False)
+    company_mission = forms.CharField(widget=forms.Textarea(attrs={'rows': 4}), required=False)
+    company_vision = forms.CharField(widget=forms.Textarea(attrs={'rows': 4}), required=False)
+    company_about = forms.CharField(widget=forms.Textarea(attrs={'rows': 4}), required=False)
+    company_address = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=False)
+    company_careers = forms.CharField(widget=forms.Textarea(attrs={'rows': 4}), required=False)
     
     class Meta:
         model = UserProfile
@@ -33,6 +39,15 @@ class UserProfileForm(forms.ModelForm):
             self.fields['first_name'].initial = self.instance.user.first_name
             self.fields['last_name'].initial = self.instance.user.last_name
             self.fields['email'].initial = self.instance.user.email
+            
+            # Set company fields if user is an employer
+            if self.instance.role == 'RECRUITER' and self.instance.company:
+                self.fields['company_name'].initial = self.instance.company.name
+                self.fields['company_mission'].initial = self.instance.company.mission
+                self.fields['company_vision'].initial = self.instance.company.vision
+                self.fields['company_about'].initial = self.instance.company.about
+                self.fields['company_address'].initial = self.instance.company.address
+                self.fields['company_careers'].initial = self.instance.company.careers
 
 class MessageForm(forms.Form):
     content = forms.CharField(

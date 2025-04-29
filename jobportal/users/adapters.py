@@ -67,4 +67,3 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         # Social login users will need to sign up through regular forms
         # to get assigned a specific role
         return user
-

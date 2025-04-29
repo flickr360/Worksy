@@ -1,79 +1,46 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Select Your Role | Worksy{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-8 text-center mb-5">
-            <h1 class="display-4 mb-3">Welcome to Worksy</h1>
-            <p class="lead">Please select how you want to use our platform today. You can switch roles anytime from your profile menu.</p>
-        </div>
-    </div>
-    
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100 role-card" data-role="applicant">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-user-graduate fa-5x text-primary"></i>
-                            </div>
-                            <h3 class="card-title mb-3">Job Seeker</h3>
-                            <p class="card-text mb-4">Find your dream job with AI-powered matching</p>
-                            <div class="features-list mb-4 text-start">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-check-circle text-success me-2"></i>
-                                    <span>Browse and apply to jobs</span>
-                                </div>
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-check-circle text-success me-2"></i>
-                                    <span>Get personalized job recommendations</span>
-                                </div>
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-check-circle text-success me-2"></i>
-                                    <span>AI resume assistant</span>
-                                </div>
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-check-circle text-success me-2"></i>
-                                    <span>Track your applications</span>
-                                </div>
-                            </div>
-                            <a href="{% url 'set_role' %}?role=applicant" class="btn btn-primary btn-lg w-100">Continue as Job Seeker</a>
-                        </div>
-                    </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Select Your Role</h3>
                 </div>
-                
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100 role-card" data-role="recruiter">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-user-tie fa-5x text-primary"></i>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title">Job Seeker</h5>
+                                            <p class="card-text">I'm looking for job opportunities</p>
+                                            <button type="submit" name="role" value="APPLICANT" class="btn btn-primary">
+                                                Select as Job Seeker
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title">Recruiter</h5>
+                                            <p class="card-text">I'm looking to hire candidates</p>
+                                            <button type="submit" name="role" value="RECRUITER" class="btn btn-primary">
+                                                Select as Recruiter
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <h3 class="card-title mb-3">Recruiter</h3>
-                            <p class="card-text mb-4">Find the perfect candidates for your positions</p>
-                            <div class="features-list mb-4 text-start">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-check-circle text-success me-2"></i>
-                                    <span>Post and manage job listings</span>
-                                </div>
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-check-circle text-success me-2"></i>
-                                    <span>Review applications</span>
-                                </div>
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-check-circle text-success me-2"></i>
-                                    <span>Schedule interviews</span>
-                                </div>
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-check-circle text-success me-2"></i>
-                                    <span>Manage candidate pipeline</span>
-                                </div>
-                            </div>
-                            <a href="{% url 'set_role' %}?role=recruiter" class="btn btn-primary btn-lg w-100">Continue as Recruiter</a>
                         </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>

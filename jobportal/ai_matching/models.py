@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from jobs.models import Job
 
+
 class JobRecommendation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_recommendations')
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='recommendations')
@@ -21,4 +22,3 @@ class SkillsMatrix(models.Model):
     
     def __str__(self):
         return self.skill_name
-

@@ -15,7 +15,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 import environ
 from pathlib import Path
-from decouple import config
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -133,8 +132,6 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.github',
-    'social_django',
-    'channels_redis',
     
     # Local apps
     'jobs',
@@ -294,11 +291,12 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
 # Social Auth Configuration
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/users/applicant/dashboard/'
 SOCIAL_AUTH_LOGIN_ERROR_URL = '/users/applicant/login/'
+SOCIAL_AUTH_DISCONNECT_REDIRECT_URL = '/'
 SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/users/applicant/dashboard/'
 SOCIAL_AUTH_NEW_ASSOCIATION_REDIRECT_URL = '/users/applicant/dashboard/'
 
-# Additional Social Auth Settings
-SOCIAL_AUTH_PIPELINE = (
+# Social Auth Settings
+SOCIALACCOUNT_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
     'social_core.pipeline.social_auth.social_uid',
     'social_core.pipeline.social_auth.auth_allowed',
@@ -307,9 +305,17 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.user.create_user',
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
-    'social_core.pipeline.user.user_details',
-    'users.pipeline.create_user_profile',
+    'users.pipeline.social_auth_role_handler',
 )
+
+LOGIN_REDIRECT_URL = '/users/applicant/dashboard/'
+SOCIALACCOUNT_LOGIN_REDIRECT_URL = '/users/applicant/dashboard/'
+
+# Add this if you want to handle login errors
+SOCIAL_AUTH_LOGIN_ERROR_URL = '/users/oauth-login/'
+
+# Add this to handle disconnection
+SOCIAL_AUTH_DISCONNECT_REDIRECT_URL = '/'
 
 # AllAuth settings
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'

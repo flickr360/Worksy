@@ -166,7 +166,7 @@
                             <span>{{ profile_strength }}%</span>
                         </div>
                         <div class="progress">
-                            <div class="progress-bar bg-success" 
+                            <div class="progress-bar bg-success profile-progress" 
                                  role="progressbar" 
                                  style="width: {{ profile_strength }}%"
                                  aria-valuenow="{{ profile_strength }}" 
@@ -218,8 +218,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const progressBar = document.querySelector('.profile-progress');
         if (progressBar) {
-            const progress = progressBar.dataset.progress;
-            progressBar.style.width = progress + '%';
+            progressBar.style.width = '{{ profile_strength }}%';
         }
     });
 </script>

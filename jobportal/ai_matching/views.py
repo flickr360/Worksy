@@ -1,7 +1,8 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .services import JobMatchingService
 from .models import JobRecommendation
+from django.urls import reverse
 
 @login_required
 def job_recommendations(request):
@@ -57,4 +58,3 @@ def skill_analysis(request):
         'missing_skills': missing_skills,
     }
     return render(request, 'ai_matching/skill_analysis.html', context)
-

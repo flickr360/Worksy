@@ -113,4 +113,3 @@ class InterviewScheduleForm(forms.ModelForm):
             'is_virtual': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
-

@@ -1,43 +1,45 @@
 import nltk
-nltk.data.path.append('path_to_custom_nltk_data')
+import os
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 from jobs.models import Job
 from users.models import UserProfile
 from .models import JobRecommendation
-import os
 
+# Dynamic path for NLTK data
+def get_nltk_data_dir():
+    if os.name == 'nt':  # For Windows
+        return os.path.join(os.getenv("APPDATA"), "nltk_data")
+    else:  # For macOS/Linux
+        return os.path.join(os.path.expanduser("~"), "nltk_data")
+
+# Ensure that NLTK data is available
 def ensure_nltk_data():
-    """Ensure all required NLTK data is downloaded."""
-    required_packages = ['punkt', 'stopwords']  # Removed 'punkt_tab'
-    nltk_data_dir = os.path.expanduser('~/nltk_data')
+    nltk_data_dir = get_nltk_data_dir()
+    nltk.data.path.append(nltk_data_dir)
     os.makedirs(nltk_data_dir, exist_ok=True)
     
+    required_packages = ['punkt', 'stopwords']
     for package in required_packages:
         try:
-            nltk.data.find(f'tokenizers/{package}' if package == 'punkt' else f'corpora/{package}')
+            nltk.data.find(f'{package}')
         except LookupError:
-            try:
-                nltk.download(package, quiet=True)
-            except Exception as e:
-                print(f"Warning: Could not download {package}: {str(e)}")
+            nltk.download(package, download_dir=nltk_data_dir)
 
 # Ensure NLTK data is available at startup
 ensure_nltk_data()
 
 class JobMatchingService:
     def __init__(self):
-        ensure_nltk_data()  # Ensure data is available when service is initialized
         try:
             self.stop_words = set(stopwords.words('english'))
         except LookupError:
             print("Warning: stopwords not available, using empty set")
             self.stop_words = set()
         self.vectorizer = TfidfVectorizer()
-    
+
     def preprocess_text(self, text):
         if not text:
             return ""
@@ -102,4 +104,3 @@ class JobMatchingService:
             )
         
         return top_recommendations
-

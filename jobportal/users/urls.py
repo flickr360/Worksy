@@ -11,6 +11,7 @@ urlpatterns = [
     # Profile URLs
     path('profile/', views.profile, name='profile'),
     path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('profile/delete/', views.delete_account, name='delete_account'),
     path('notifications/', views.notifications, name='notifications'),
     path('messages/', views.message_list, name='message_list'),
     path('messages/<int:conversation_id>/', views.conversation_detail, name='conversation_detail'),
@@ -29,6 +30,7 @@ urlpatterns = [
     # Dashboard URLs
     path('applicant/dashboard/', views.applicant_dashboard, name='applicant_dashboard'),
     path('recruiter/dashboard/', views.recruiter_dashboard, name='recruiter_dashboard'),
+    path('employer/dashboard/', views.employer_dashboard, name='employer_dashboard'),
 
     # Chatbot URLs
     path('chatbot/', views.chatbot, name='chatbot'),
@@ -44,4 +46,6 @@ urlpatterns = [
 
     # Test Email URL
     path('test-email/', views.test_email, name='test_email'),
+
+    path('oauth-login/', views.oauth_login, name='oauth_login'),
 ]

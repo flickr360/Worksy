@@ -14,6 +14,49 @@
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         
+                        {% if user.profile.role == 'RECRUITER' %}
+                        <h5 class="mb-3">Company Information</h5>
+                        <div class="row mb-4">
+                            <div class="col-md-12 mb-3">
+                                <label for="id_company_logo" class="form-label">Company Logo</label>
+                                {% if user.profile.company.logo %}
+                                    <div class="mb-2">
+                                        <img src="{{ user.profile.company.logo.url }}" alt="Current company logo" class="img-thumbnail" style="max-height: 100px;">
+                                    </div>
+                                {% endif %}
+                                <input type="file" name="company_logo" id="id_company_logo" class="form-control" accept="image/*">
+                                <small class="form-text text-muted">Recommended size: 100x100px. Maximum file size: 5MB.</small>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="id_company_name" class="form-label">Company Name</label>
+                                <input type="text" name="company_name" id="id_company_name" value="{{ form.company_name.value|default:'' }}" class="form-control">
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="id_company_mission" class="form-label">Company Mission</label>
+                                <textarea name="company_mission" id="id_company_mission" class="form-control" rows="4">{{ form.company_mission.value|default:'' }}</textarea>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="id_company_vision" class="form-label">Company Vision</label>
+                                <textarea name="company_vision" id="id_company_vision" class="form-control" rows="4">{{ form.company_vision.value|default:'' }}</textarea>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="id_company_about" class="form-label">About the Company</label>
+                                <textarea name="company_about" id="id_company_about" class="form-control" rows="4">{{ form.company_about.value|default:'' }}</textarea>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="id_company_address" class="form-label">Company Address</label>
+                                <textarea name="company_address" id="id_company_address" class="form-control" rows="3">{{ form.company_address.value|default:'' }}</textarea>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="id_company_careers" class="form-label">Careers at Our Company</label>
+                                <textarea name="company_careers" id="id_company_careers" class="form-control" rows="4">{{ form.company_careers.value|default:'' }}</textarea>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="id_email" class="form-label">Company Email</label>
+                                <input type="email" name="email" id="id_email" value="{{ form.email.value|default:'' }}" class="form-control">
+                            </div>
+                        </div>
+                        {% else %}
                         <h5 class="mb-3">Basic Information</h5>
                         <div class="row mb-4">
                             <div class="col-md-6 mb-3">
@@ -37,6 +80,7 @@
                                 {{ form.location }}
                             </div>
                         </div>
+                        {% endif %}
                         
                         <h5 class="mb-3">Profile Details</h5>
                         <div class="row mb-4">
@@ -54,6 +98,7 @@
                                 {% endif %}
                                 <input type="file" name="profile_picture" id="id_profile_picture" class="form-control">
                             </div>
+                            {% if user.profile.role != 'RECRUITER' %}
                             <div class="col-md-6 mb-3">
                                 <label for="id_resume" class="form-label">Resume</label>
                                 {% if user.profile.resume %}
@@ -63,8 +108,10 @@
                                 {% endif %}
                                 <input type="file" name="resume" id="id_resume" class="form-control">
                             </div>
+                            {% endif %}
                         </div>
                         
+                        {% if user.profile.role != 'RECRUITER' %}
                         <h5 class="mb-3">Professional Information</h5>
                         <div class="row mb-4">
                             <div class="col-md-12 mb-3">
@@ -80,6 +127,7 @@
                                 {{ form.education }}
                             </div>
                         </div>
+                        {% endif %}
                         
                         <h5 class="mb-3">Social Links</h5>
                         <div class="row mb-4">
@@ -92,7 +140,7 @@
                                 {{ form.github_profile }}
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label for="id_website" class="form-label">Personal Website</label>
+                                <label for="id_website" class="form-label">Website</label>
                                 {{ form.website }}
                             </div>
                         </div>

@@ -14,6 +14,8 @@ from datetime import timedelta
 from notifications.models import Notification
 from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_datetime
+from django.core.exceptions import PermissionDenied
+
 
 def home(request):
     featured_jobs = Job.objects.filter(is_active=True).order_by('-posted_date')[:6]
@@ -94,13 +96,16 @@ def job_detail(request, job_id):
     
     # Check if user has already applied
     has_applied = False
+    user_role = None
     if request.user.is_authenticated:
         has_applied = JobApplication.objects.filter(job=job, applicant=request.user).exists()
+        user_role = request.user.profile.role if hasattr(request.user, 'profile') else None
     
     context = {
         'job': job,
         'related_jobs': related_jobs,
         'has_applied': has_applied,
+        'user_role': user_role,
     }
     return render(request, 'jobs/job_detail.html', context)
 
@@ -266,8 +271,7 @@ def application_dashboard(request):
         'rejected': rejected,
         'interviews': interviews,
     }
-    return render(request, 'jobs/application_dashboard.html', context)
-
+    return render(request, 'jobs/application_dashboard.html',context)
 @login_required
 def employer_dashboard(request):
     # Check if user is a recruiter
@@ -539,3 +543,32 @@ def interview_detail(request, interview_id):
             'error': str(e)
         }, status=404)
 
+@login_required
+def edit_job(request, job_id):
+    job = get_object_or_404(Job, id=job_id)
+    
+    # Check if user is authorized to edit this job
+    if job.posted_by != request.user and not request.user.is_staff:
+        raise PermissionDenied("You don't have permission to edit this job.")
+    
+    if request.method == 'POST':
+        form = JobPostForm(request.POST, instance=job)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, 'Job updated successfully!')
+                return redirect('jobs:job_detail', job_id=job.id)
+            except Exception as e:
+                messages.error(request, f'Error updating job: {str(e)}')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = JobPostForm(instance=job)
+    
+    context = {
+        'form': form,
+        'job': job,
+    }
+    return render(request, 'jobs/edit_job.html', context)

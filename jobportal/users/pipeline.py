@@ -1,3 +1,5 @@
+from django.shortcuts import redirect
+from django.urls import reverse
 from .models import UserProfile
 
 def create_user_profile(backend, user, response, *args, **kwargs):
@@ -34,4 +36,29 @@ def create_user_profile(backend, user, response, *args, **kwargs):
     return {
         'user': user,
         'is_new': kwargs.get('is_new', False)
-    } 
+    }
+
+def social_auth_role_handler(strategy, details, user=None, *args, **kwargs):
+    if user:
+        # Get or create user profile
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        
+        # Set default role to APPLICANT if not set
+        if not profile.role:
+            profile.role = 'APPLICANT'
+            profile.save()
+        
+        # Set redirect URL based on role
+        if profile.role == 'APPLICANT':
+            return {
+                'redirect_url': reverse('users:applicant_dashboard')
+            }
+        elif profile.role == 'RECRUITER':
+            return {
+                'redirect_url': reverse('users:recruiter_dashboard')
+            }
+        else:
+            return {
+                'redirect_url': reverse('users:home')
+            }
+    return None 

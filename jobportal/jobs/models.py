@@ -8,6 +8,11 @@ class Company(models.Model):
     website = models.URLField(blank=True, null=True)
     logo = models.ImageField(upload_to='company_logos/', blank=True, null=True)
     location = models.CharField(max_length=200)
+    mission = models.TextField(blank=True, null=True)
+    vision = models.TextField(blank=True, null=True)
+    about = models.TextField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    careers = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -103,4 +108,3 @@ class Interview(models.Model):
     
     def __str__(self):
         return f"Interview for {self.application.job.title} with {self.application.applicant.username}"
-

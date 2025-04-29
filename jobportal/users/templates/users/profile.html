@@ -55,7 +55,7 @@
         <div class="col-md-4 mb-4">
             <div class="card h-100">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Personal Information</h5>
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Social Links</h5>
                 </div>
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
@@ -81,7 +81,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-4 mb-4">
             <div class="card h-100">
                 <div class="card-header bg-primary text-white">
@@ -96,7 +96,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-4 mb-4">
             <div class="card h-100">
                 <div class="card-header bg-primary text-white">
@@ -112,7 +112,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="row">
         <div class="col-md-6 mb-4">
             <div class="card h-100">
@@ -137,7 +137,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-6 mb-4">
             <div class="card h-100">
                 <div class="card-header bg-primary text-white">
@@ -147,13 +147,15 @@
                     {% if applications %}
                     <div class="list-group">
                         {% for application in applications|slice:":5" %}
-                        <a href="{% url 'jobs:job_detail' application.job.id %}" class="list-group-item list-group-item-action">
+                        <a href="{% url 'jobs:job_detail' application.job.id %}"
+                            class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">{{ application.job.title }}</h6>
                                 <small class="text-muted">{{ application.applied_date|date }}</small>
                             </div>
                             <p class="mb-1">{{ application.job.company.name }}</p>
-                            <small class="text-muted">Status: <span class="badge bg-{{ application.status|lower }}">{{ application.get_status_display }}</span></small>
+                            <small class="text-muted">Status: <span class="badge bg-{{ application.status|lower }}">{{
+                                    application.get_status_display }}</span></small>
                         </a>
                         {% endfor %}
                     </div>
@@ -169,6 +171,47 @@
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
 
+<div class="card mt-4 border-danger">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-exclamation-triangle me-2"></i>Account Deletion
+        </h5>
+    </div>
+    <div class="card-body">
+        <p class="text-danger mb-3">
+            Warning: Deleting your account will permanently remove all your data, including your company profile, job
+            postings, and application history. This action cannot be undone.
+        </p>
+        <!-- Trigger Button for Modal -->
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal">
+            <i class="fas fa-trash-alt me-2"></i>Delete Account
+        </button>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmLabel">Worksy Notice</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete your account?<br>
+                <strong>This action cannot be undone.</strong>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'users:delete_account' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">OK</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

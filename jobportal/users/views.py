@@ -30,6 +30,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from datetime import timedelta
 from django.conf import settings
+import os
 
 def home(request):
     # If user is logged in, redirect to appropriate dashboard based on role
@@ -381,51 +382,167 @@ def recruiter_dashboard(request):
 
 @login_required
 def profile(request):
-    user_profile = request.user.profile
-    applications = JobApplication.objects.filter(applicant=request.user)
-    
-    # Get unread notifications
-    notifications = Notification.objects.filter(user=request.user, is_read=False)[:5]
+    user = request.user
+    profile = user.profile
+    applications = JobApplication.objects.filter(applicant=user) if user.profile.role == 'APPLICANT' else None
     
     context = {
-        'profile': user_profile,
+        'user': user,
+        'profile': profile,
         'applications': applications,
-        'notifications': notifications,
     }
-    return render(request, 'users/profile.html', context)
+    
+    if user.profile.role == 'RECRUITER':
+        return render(request, 'users/recruiter_profile.html', context)
+    else:
+        return render(request, 'users/profile.html', context)
 
 @login_required
 def edit_profile(request):
     if request.method == 'POST':
-        form = UserProfileForm(request.POST, request.FILES, instance=request.user.profile)
-        if form.is_valid():
-            form.save()
-            
-            # Update user model fields if provided
-            user = request.user
-            first_name = request.POST.get('first_name')
-            last_name = request.POST.get('last_name')
-            email = request.POST.get('email')
-            
-            if first_name:
-                user.first_name = first_name
-            if last_name:
-                user.last_name = last_name
-            if email:
-                user.email = email
-            
-            user.save()
-            
-            messages.success(request, 'Your profile has been updated successfully!')
-            return redirect('users:profile')
+        try:
+            form = UserProfileForm(request.POST, request.FILES, instance=request.user.profile)
+            if form.is_valid():
+                profile = form.save(commit=False)
+                
+                # Update user model fields if provided
+                user = request.user
+                first_name = request.POST.get('first_name')
+                last_name = request.POST.get('last_name')
+                email = request.POST.get('email')
+                
+                if first_name:
+                    user.first_name = first_name
+                if last_name:
+                    user.last_name = last_name
+                if email and email != user.email:
+                    # Check if email is already taken
+                    if User.objects.filter(email=email).exclude(id=user.id).exists():
+                        messages.error(request, 'This email is already in use.')
+                        return redirect('users:edit_profile')
+                    user.email = email
+                
+                user.save()
+                
+                # Update profile fields with validation
+                profile.bio = request.POST.get('bio', profile.bio)
+                profile.location = request.POST.get('location', profile.location)
+                
+                # Validate phone number format
+                phone_number = request.POST.get('phone_number')
+                if phone_number:
+                    # Remove any non-digit characters
+                    phone_number = ''.join(filter(str.isdigit, phone_number))
+                    if len(phone_number) < 10:
+                        messages.error(request, 'Please enter a valid phone number.')
+                        return redirect('users:edit_profile')
+                profile.phone_number = phone_number
+                
+                profile.skills = request.POST.get('skills', profile.skills)
+                profile.experience = request.POST.get('experience', profile.experience)
+                profile.education = request.POST.get('education', profile.education)
+                
+                # Validate URL fields
+                linkedin_profile = request.POST.get('linkedin_profile')
+                if linkedin_profile and not linkedin_profile.startswith(('http://', 'https://')):
+                    linkedin_profile = f'https://{linkedin_profile}'
+                profile.linkedin_profile = linkedin_profile
+
+                github_profile = request.POST.get('github_profile')
+                if github_profile and not github_profile.startswith(('http://', 'https://')):
+                    github_profile = f'https://{github_profile}'
+                profile.github_profile = github_profile
+
+                website = request.POST.get('website')
+                if website and not website.startswith(('http://', 'https://')):
+                    website = f'https://{website}'
+                profile.website = website
+                
+                # Handle file uploads with validation
+                if 'profile_picture' in request.FILES:
+                    image = request.FILES['profile_picture']
+                    # Validate file type
+                    if not image.content_type.startswith('image/'):
+                        messages.error(request, 'Please upload a valid image file.')
+                        return redirect('users:edit_profile')
+                    # Validate file size (max 5MB)
+                    if image.size > 5 * 1024 * 1024:
+                        messages.error(request, 'Profile picture must be less than 5MB.')
+                        return redirect('users:edit_profile')
+                    profile.profile_picture = image
+
+                if 'resume' in request.FILES:
+                    resume = request.FILES['resume']
+                    # Validate file type
+                    allowed_types = ['application/pdf', 'application/msword', 
+                                   'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+                    if resume.content_type not in allowed_types:
+                        messages.error(request, 'Please upload a PDF or Word document.')
+                        return redirect('users:edit_profile')
+                    # Validate file size (max 10MB)
+                    if resume.size > 10 * 1024 * 1024:
+                        messages.error(request, 'Resume must be less than 10MB.')
+                        return redirect('users:edit_profile')
+                    profile.resume = resume
+                
+                profile.save()
+                
+                # Update company information if user is a recruiter
+                if request.user.profile.role == 'RECRUITER':
+                    company = request.user.profile.company
+                    if company:
+                        try:
+                            company.name = request.POST.get('company_name', company.name)
+                            company.mission = request.POST.get('company_mission', company.mission)
+                            company.vision = request.POST.get('company_vision', company.vision)
+                            company.about = request.POST.get('company_about', company.about)
+                            company.address = request.POST.get('company_address', company.address)
+                            company.careers = request.POST.get('company_careers', company.careers)
+                            
+                            # Handle company logo upload
+                            if 'company_logo' in request.FILES:
+                                logo = request.FILES['company_logo']
+                                # Validate file type
+                                if not logo.content_type.startswith('image/'):
+                                    messages.error(request, 'Please upload a valid image file for company logo.')
+                                    return redirect('users:edit_profile')
+                                # Validate file size (max 5MB)
+                                if logo.size > 5 * 1024 * 1024:
+                                    messages.error(request, 'Company logo must be less than 5MB.')
+                                    return redirect('users:edit_profile')
+                                company.logo = logo
+                            
+                            company.save()
+                        except Exception as e:
+                            messages.warning(request, f'Profile updated but company information could not be saved: {str(e)}')
+                            return redirect('users:profile')
+                
+                messages.success(request, 'Your profile has been updated successfully!')
+                return redirect('users:profile')
+            else:
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
+        except Exception as e:
+            messages.error(request, f'An error occurred while updating your profile: {str(e)}')
+            return redirect('users:edit_profile')
     else:
         form = UserProfileForm(instance=request.user.profile)
     
     context = {
         'form': form,
         'user': request.user,
+        'profile': request.user.profile
     }
     return render(request, 'users/edit_profile.html', context)
+
+@login_required
+def delete_account(request):
+    if request.method == 'POST':
+        user = request.user
+        user.delete()
+        return redirect('/')  # Redirect to home after account deletion
+    return render(request, 'users/delete_account.html')
 
 @login_required
 def notifications(request):
@@ -601,6 +718,19 @@ def chatbot(request):
     if active_conversation_id:
         try:
             active_conversation = ChatbotConversation.objects.get(id=active_conversation_id, user=request.user)
+            
+            # Clean up duplicate messages
+            messages = ChatbotMessage.objects.filter(conversation=active_conversation).order_by('created_at')
+            last_message = None
+            for message in messages:
+                if last_message and message.content == last_message.content and \
+                   message.message_type == last_message.message_type and \
+                   (message.created_at - last_message.created_at).total_seconds() < 5:
+                    # Delete duplicate message
+                    message.delete()
+                else:
+                    last_message = message
+                    
         except ChatbotConversation.DoesNotExist:
             active_conversation = None
     
@@ -623,8 +753,8 @@ def chatbot(request):
     # Set active conversation in session
     request.session['active_chatbot_conversation'] = active_conversation.id
     
-    # Get messages for active conversation
-    messages = ChatbotMessage.objects.filter(conversation=active_conversation)
+    # Get messages for active conversation (after cleanup)
+    messages = ChatbotMessage.objects.filter(conversation=active_conversation).order_by('created_at')
     
     context = {
         'conversations': conversations,
@@ -670,49 +800,71 @@ def send_chatbot_message(request):
         
         try:
             conversation = ChatbotConversation.objects.get(id=conversation_id, user=request.user)
-        except ChatbotConversation.DoesNotExist:
-            return JsonResponse({'error': 'Conversation not found'}, status=404)
-        
-        data = json.loads(request.body)
-        user_message = data.get('message', '').strip()
-        
-        if not user_message:
-            return JsonResponse({'error': 'Message cannot be empty'}, status=400)
-        
-        # Save user message
-        ChatbotMessage.objects.create(
-            conversation=conversation,
-            message_type='USER',
-            content=user_message
-        )
-        
-        # Generate bot response based on user message
-        bot_response = generate_chatbot_response(user_message, request.user)
-        
-        # Save bot response
-        bot_message = ChatbotMessage.objects.create(
-            conversation=conversation,
-            message_type='BOT',
-            content=bot_response
-        )
-        
-        # Update conversation
-        conversation.updated_at = bot_message.created_at
-        if conversation.title == "New Conversation":
-            # Update title based on first user message
-            conversation.title = user_message[:30] + "..." if len(user_message) > 30 else user_message
-        conversation.save()
-        
-        return JsonResponse({
-            'user_message': {
-                'content': user_message,
-                'created_at': ChatbotMessage.objects.filter(conversation=conversation, message_type='USER').last().created_at.strftime('%b %d, %Y, %I:%M %p')
-            },
-            'bot_message': {
-                'content': bot_response,
-                'created_at': bot_message.created_at.strftime('%b %d, %Y, %I:%M %p')
-            }
-        })
+            
+            # Get the last message timestamp from the session
+            last_message_time = request.session.get('last_message_time', 0)
+            current_time = timezone.now().timestamp()
+            
+            # Prevent duplicate messages within 2 seconds
+            if current_time - last_message_time < 2:
+                return JsonResponse({'error': 'Please wait a moment'}, status=429)
+            
+            # Update last message timestamp
+            request.session['last_message_time'] = current_time
+            
+            data = json.loads(request.body)
+            user_message = data.get('message', '').strip()
+            
+            if not user_message:
+                return JsonResponse({'error': 'Message cannot be empty'}, status=400)
+            
+            # Save user message without creating a notification
+            user_message_obj = ChatbotMessage.objects.create(
+                conversation=conversation,
+                message_type='USER',
+                content=user_message
+            )
+            
+            try:
+                # Generate bot response based on user message
+                bot_response = generate_chatbot_response(user_message, request.user)
+                
+                # Save bot response without creating a notification
+                bot_message = ChatbotMessage.objects.create(
+                    conversation=conversation,
+                    message_type='BOT',
+                    content=bot_response
+                )
+                
+                # Update conversation title silently
+                if conversation.title == "New Conversation":
+                    conversation.title = user_message[:30] + "..." if len(user_message) > 30 else user_message
+                    conversation.save(update_fields=['title'])
+                
+                # Update conversation timestamp silently
+                conversation.updated_at = bot_message.created_at
+                conversation.save(update_fields=['updated_at'])
+                
+                return JsonResponse({
+                    'user_message': {
+                        'content': user_message,
+                        'created_at': user_message_obj.created_at.strftime('%b %d, %Y, %I:%M %p')
+                    },
+                    'bot_message': {
+                        'content': bot_response,
+                        'created_at': bot_message.created_at.strftime('%b %d, %Y, %I:%M %p')
+                    }
+                })
+                
+            except Exception as e:
+                print(f"Error generating chatbot response: {str(e)}")
+                return JsonResponse({'error': str(e)}, status=500)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid message format'}, status=400)
+        except Exception as e:
+            print(f"Error processing chatbot message: {str(e)}")
+            return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
@@ -726,39 +878,39 @@ def generate_chatbot_response(user_message, user):
     api_key = os.environ.get('OPENAI_API_KEY')
     
     if not api_key:
-        # Fallback to a default response if API key is not available
+        print("OpenAI API key not found in environment variables")
         return "I'm your AI resume assistant, but I'm currently experiencing some technical difficulties. Please try again later or contact support."
     
-    # Set up OpenAI client
-    client = openai.OpenAI(api_key=api_key)
-    
-    # Get user profile information to provide context
-    profile = user.profile
-    profile_info = {
-        "has_resume": bool(profile.resume),
-        "has_skills": bool(profile.skills),
-        "has_experience": bool(profile.experience),
-        "has_education": bool(profile.education),
-        "role": profile.role
-    }
-    
-    # Create system message with context
-    system_message = f"""
-    You are an AI resume and job search assistant for a job portal. 
-    Your goal is to help users improve their resumes, prepare for interviews, and enhance their job search strategies.
-    
-    User profile information:
-    - Has uploaded resume: {profile_info['has_resume']}
-    - Has listed skills: {profile_info['has_skills']}
-    - Has listed experience: {profile_info['has_experience']}
-    - Has listed education: {profile_info['has_education']}
-    - Role on platform: {profile_info['role']}
-    
-    Provide helpful, concise advice tailored to the user's needs. If they haven't completed their profile,
-    encourage them to do so for better job matching.
-    """
-    
     try:
+        # Set up OpenAI client with just the API key
+        client = openai.OpenAI(api_key=api_key)
+        
+        # Get user profile information to provide context
+        profile = user.profile
+        profile_info = {
+            "has_resume": bool(profile.resume),
+            "has_skills": bool(profile.skills),
+            "has_experience": bool(profile.experience),
+            "has_education": bool(profile.education),
+            "role": profile.role
+        }
+        
+        # Create system message with context
+        system_message = f"""
+        You are an AI resume and job search assistant for a job portal. 
+        Your goal is to help users improve their resumes, prepare for interviews, and enhance their job search strategies.
+        
+        User profile information:
+        - Has uploaded resume: {profile_info['has_resume']}
+        - Has listed skills: {profile_info['has_skills']}
+        - Has listed experience: {profile_info['has_experience']}
+        - Has listed education: {profile_info['has_education']}
+        - Role on platform: {profile_info['role']}
+        
+        Provide helpful, concise advice tailored to the user's needs. If they haven't completed their profile,
+        encourage them to do so for better job matching.
+        """
+        
         # Call OpenAI API
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -773,20 +925,15 @@ def generate_chatbot_response(user_message, user):
         # Extract and return the response text
         return response.choices[0].message.content
         
+    except openai.AuthenticationError as e:
+        print(f"OpenAI Authentication Error: {str(e)}")
+        return "I'm having trouble authenticating with the AI service. Please contact support."
+    except openai.APIError as e:
+        print(f"OpenAI API Error: {str(e)}")
+        return "I'm having trouble connecting to the AI service. Please try again later."
     except Exception as e:
-        # Log the error (in a real application)
-        print(f"Error calling OpenAI API: {str(e)}")
-        
-        # Return a fallback response
-        return """I apologize, but I'm having trouble connecting to my knowledge base right now. 
-        
-Here are some general tips that might help:
-1. Tailor your resume to each job application
-2. Quantify your achievements with numbers when possible
-3. Prepare for interviews by researching the company
-4. Network actively to find hidden job opportunities
-
-Please try again later for more personalized assistance."""
+        print(f"Unexpected error in generate_chatbot_response: {str(e)}")
+        return "I'm experiencing some technical difficulties. Please try again later."
 
 @login_required
 def logout_view(request):
@@ -807,11 +954,20 @@ def github_login(request):
 
 def oauth_login(request):
     """
-    Display the unified OAuth login page
+    Display the unified OAuth login page and handle OAuth authentication
     """
+    if request.user.is_authenticated:
+        # If user is already logged in, redirect based on role
+        if request.user.profile.role == 'APPLICANT':
+            return redirect('users:applicant_dashboard')
+        elif request.user.profile.role == 'RECRUITER':
+            return redirect('users:recruiter_dashboard')
+        else:
+            # If no role is set, redirect to role selection
+            return redirect('users:role_selection')
+    
     return render(request, 'users/oauth_login.html')
 
-# Add this to your social auth pipeline to handle role selection
 def social_auth_role_handler(backend, user, response, *args, **kwargs):
     """
     Handle role selection for social auth users
@@ -820,41 +976,8 @@ def social_auth_role_handler(backend, user, response, *args, **kwargs):
         # Default to applicant role for social auth users
         profile = UserProfile.objects.create(
             user=user,
-            role='APPLICANT'
+            role='APPLICANT'  # <-- This is the issue
         )
-        
-        # Get additional info from social providers
-        if backend.name == 'google-oauth2':
-            if response.get('name'):
-                names = response['name'].split(' ', 1)
-                user.first_name = names[0]
-                if len(names) > 1:
-                    user.last_name = names[1]
-            if response.get('email'):
-                user.email = response['email']
-                
-        elif backend.name == 'github':
-            if response.get('name'):
-                names = response['name'].split(' ', 1)
-                user.first_name = names[0]
-                if len(names) > 1:
-                    user.last_name = names[1]
-            if response.get('email'):
-                user.email = response['email']
-            if response.get('bio'):
-                profile.bio = response['bio']
-            if response.get('location'):
-                profile.location = response['location']
-            if response.get('blog'):
-                profile.website = response['blog']
-        
-        profile.save()
-        user.save()
-    
-    return {
-        'user': user,
-        'is_new': kwargs.get('is_new', False)
-    }
 
 def test_email(request):
     if not request.user.is_authenticated:
