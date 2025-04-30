@@ -31,8 +31,8 @@
                         <p class="text-center mb-3">{% trans "Sign up with one of your existing accounts:" %}</p>
                         <div class="d-flex justify-content-center gap-2 mb-3">
                             {% for provider in socialaccount_providers %}
-                            <a href="{% provider_login_url provider.id process='login' %}?next={% url 'users:applicant_dashboard' %}" 
-                               class="btn {% if provider.id == 'google' %}btn-danger{% elif provider.id == 'github' %}btn-dark{% elif provider.id == 'linkedin' %}btn-primary{% else %}btn-secondary{% endif %}">
+                            <a href = "{% provider_login_url 'google' process='login' %}?next={% url 'users:set_role_and_redirect' 'APPLICANT' %}" class="btn btn-danger">
+                               <class="btn {% if provider.id == 'google' %}btn-danger{% elif provider.id == 'github' %}btn-dark{% elif provider.id == 'linkedin' %}btn-primary{% else %}btn-secondary{% endif %}">
                                 {% if provider.id == 'google' %}
                                 <i class="fab fa-google me-2"></i>
                                 {% elif provider.id == 'github' %}

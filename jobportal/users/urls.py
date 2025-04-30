@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from django.contrib.auth import views as auth_views # Import Django's built-in logout view
+from django.contrib.auth import views as auth_views
 
 app_name = 'users'
 
@@ -24,8 +24,11 @@ urlpatterns = [
     path('oauth/login/', views.oauth_login, name='oauth_login'),
     path('applicant/login/', views.applicant_login, name='applicant_login'),
     path('recruiter/login/', views.recruiter_login, name='recruiter_login'),
-    path('applicant/signup/', views.applicant_signup, name='applicant_signup'),
+    path('applicant/signup/', views.applicant_signup, name='applicant_signup'), 
     path('recruiter/signup/', views.recruiter_signup, name='recruiter_signup'),
+
+    # Role selection URL
+    path('set-role/<str:role>/', views.set_role_and_redirect, name='set_role_and_redirect'),
 
     # Dashboard URLs
     path('applicant/dashboard/', views.applicant_dashboard, name='applicant_dashboard'),
@@ -38,14 +41,12 @@ urlpatterns = [
     path('chatbot/<int:conversation_id>/', views.select_chatbot_conversation, name='select_chatbot_conversation'),
     path('chatbot/send/', views.send_chatbot_message, name='send_chatbot_message'),
 
-    # Logout URL
-    path('logout/', views.logout_view, name='logout'),
+    # Logout URL (using built-in LogoutView)
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 
     # Activation URL
     path('activate/<str:uidb64>/<str:token>/', views.activate_account, name='activate'),
 
     # Test Email URL
     path('test-email/', views.test_email, name='test_email'),
-
-    path('oauth-login/', views.oauth_login, name='oauth_login'),
 ]

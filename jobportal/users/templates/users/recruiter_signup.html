@@ -14,33 +14,6 @@
                     <h3 class="mb-0">Recruiter Sign Up</h3>
                 </div>
                 <div class="card-body p-4">
-                    {% get_providers as socialaccount_providers %}
-                    
-                    {% if socialaccount_providers %}
-                    <div class="social-login mb-4">
-                        <p class="text-center mb-3">{% trans "Sign up with one of your existing accounts:" %}</p>
-                        <div class="d-flex justify-content-center gap-2 mb-3">
-                            {% for provider in socialaccount_providers %}
-                            <a href="{% provider_login_url provider.id process='login' %}?next={% url 'users:recruiter_dashboard' %}" 
-                               class="btn {% if provider.id == 'google' %}btn-danger{% elif provider.id == 'github' %}btn-dark{% elif provider.id == 'linkedin' %}btn-primary{% else %}btn-secondary{% endif %}">
-                                {% if provider.id == 'google' %}
-                                <i class="fab fa-google me-2"></i>
-                                {% elif provider.id == 'github' %}
-                                <i class="fab fa-github me-2"></i>
-                                {% elif provider.id == 'linkedin' %}
-                                <i class="fab fa-linkedin me-2"></i>
-                                {% else %}
-                                <i class="fas fa-external-link-alt me-2"></i>
-                                {% endif %}
-                                {{ provider.name }}
-                            </a>
-                            {% endfor %}
-                        </div>
-                        <div class="separator text-center mb-3">
-                            <span class="bg-white px-3 text-muted">{% trans "or" %}</span>
-                        </div>
-                    </div>
-                    {% endif %}
                     
                     {% if messages %}
                     <div class="messages mb-3">

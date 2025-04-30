@@ -12,6 +12,7 @@ urlpatterns = [
     path('post-job/', views.post_job, name='post_job'),
     path('my-jobs/', views.my_jobs, name='my_jobs'),
     path('application-dashboard/', views.application_dashboard, name='application_dashboard'),
+   
     path('employer-dashboard/', views.employer_dashboard, name='employer_dashboard'),
     path('schedule-interview/', views.schedule_interview, name='schedule_interview'),
     path('update-application-status/', views.update_application_status, name='update_application_status'),

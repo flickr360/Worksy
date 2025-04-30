@@ -63,36 +63,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Social Login Options -->
-            <div class="card shadow-lg border-0 rounded-lg mt-4">
-                <div class="card-body p-4 text-center">
-                    <p class="text-muted mb-3">Or login using</p>
-                    {% get_providers as socialaccount_providers %}
-                    {% if socialaccount_providers %}
-                    <div class="social-login mb-4">
-                        <div class="d-flex justify-content-center gap-2 mb-3">
-                            {% for provider in socialaccount_providers %}
-                            <a href="{% provider_login_url provider.id process='login' %}?next={% url 'users:applicant_dashboard' %}" 
-   class="btn {% if provider.id == 'google' %}btn-danger{% elif provider.id == 'github' %}btn-dark{% elif provider.id == 'linkedin' %}btn-primary{% else %}btn-secondary{% endif %}">
-    {% if provider.id == 'google' %}
-    <i class="fab fa-google me-2"></i>
-    {% elif provider.id == 'github' %}
-    <i class="fab fa-github me-2"></i>
-    {% elif provider.id == 'linkedin' %}
-    <i class="fab fa-linkedin me-2"></i>
-    {% else %}
-    <i class="fas fa-external-link-alt me-2"></i>
-    {% endif %}
-    {{ provider.name }}
-</a>
-
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
         </div>
     </div>
 </div>

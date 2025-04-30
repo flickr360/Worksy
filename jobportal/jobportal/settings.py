@@ -202,9 +202,9 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_VERIFICATION_MANDATORY = True
 ACCOUNT_EMAIL_CONFIRMATION_HMAC = True
 
-# Custom adapters
-ACCOUNT_ADAPTER = 'users.adapters.CustomAccountAdapter'
-SOCIALACCOUNT_ADAPTER = 'users.adapters.CustomSocialAccountAdapter'
+ACCOUNT_ADAPTER = 'users.adapters.CustomAccountAdapter'  # Adjust if your app name is different
+SOCIALACCOUNT_ADAPTER = 'users.adapters.CustomSocialAccountAdapter'  # Adjust if your app name is different
+
 
 # Social account providers
 SOCIALACCOUNT_PROVIDERS = {
@@ -235,8 +235,8 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 # Login settings
-LOGIN_URL = 'users:applicant_login'
-LOGIN_REDIRECT_URL = 'users:applicant_dashboard'
+LOGIN_URL = '/'
+LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Static files (CSS, JavaScript, Images)

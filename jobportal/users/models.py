@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from jobs.models import Company
-from django.utils import timezone
 
 class UserProfile(models.Model):
     ROLE_CHOICES = [
@@ -12,7 +11,7 @@ class UserProfile(models.Model):
     ]
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, blank=True, null=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='APPLICANT', blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
     resume = models.FileField(upload_to='resumes/', blank=True, null=True)
@@ -30,13 +29,14 @@ class UserProfile(models.Model):
         return f"{self.user.username}'s profile"
 
 @receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
+def create_or_save_user_profile(sender, instance, created, **kwargs):
     if created:
-        UserProfile.objects.create(user=instance, role='APPLICANT')
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+        UserProfile.objects.create(user=instance)
+    else:
+        if not hasattr(instance, 'profile'):
+            UserProfile.objects.create(user=instance)
+        else:
+            instance.profile.save()
 
 class Conversation(models.Model):
     participants = models.ManyToManyField(User, related_name='conversations')
@@ -59,7 +59,6 @@ class Message(models.Model):
     class Meta:
         ordering = ['created_at']
 
-# New model for chatbot conversations
 class ChatbotConversation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chatbot_conversations')
     title = models.CharField(max_length=255, default="New Conversation")
@@ -88,4 +87,3 @@ class ChatbotMessage(models.Model):
     
     class Meta:
         ordering = ['created_at']
-

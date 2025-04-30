@@ -31,6 +31,7 @@ from django.db.models import Count
 from datetime import timedelta
 from django.conf import settings
 import os
+from django.shortcuts import redirect
 
 def home(request):
     # If user is logged in, redirect to appropriate dashboard based on role
@@ -43,6 +44,10 @@ def home(request):
     # Otherwise show the home page
     from jobs.views import home as jobs_home
     return jobs_home(request)
+
+def set_role_and_redirect(request, role):
+    request.session['preferred_role'] = role.upper()  # Make sure it’s uppercase
+    return redirect('account_login')
 
 def applicant_login(request):
     if request.method == 'POST':
